@@ -11,21 +11,19 @@ namespace EasySwoole\EasySwoole;
 
 use EasySwoole\Component\Singleton;
 use EasySwoole\EasySwoole\Swoole\EventRegister;
+use Swoole\Redis\Server as RedisServer;
 
 class ServerManager
 {
     use Singleton;
-
+    /**
+     * @var \swoole_server $swooleServer
+     */
     private $swooleServer;
     private $mainServerEventRegister;
-
     private $subServer = [];
     private $subServerRegister = [];
-
-    const TYPE_SERVER = 'SERVER';
-    const TYPE_WEB_SERVER = 'WEB_SERVER';
-    const TYPE_WEB_SOCKET_SERVER = 'WEB_SOCKET_SERVER';
-
+    private $isStart = false;
 
     function __construct()
     {
@@ -33,7 +31,7 @@ class ServerManager
     }
     /**
      * @param string $serverName
-     * @return null|\swoole_server|\swoole_server_port
+     * @return null|\swoole_server|\swoole_server_port|\swoole_websocket_server|\swoole_http_server
      */
     function getSwooleServer(string $serverName = null)
     {
@@ -47,19 +45,23 @@ class ServerManager
         }
     }
 
-    function createSwooleServer($port,$type = self::TYPE_SERVER,$address = '0.0.0.0',array $setting = [],...$args):bool
+    function createSwooleServer($port,$type ,$address = '0.0.0.0',array $setting = [],...$args):bool
     {
         switch ($type){
-            case self::TYPE_SERVER:{
+            case EASYSWOOLE_SERVER:{
                 $this->swooleServer = new \swoole_server($address,$port,...$args);
                 break;
             }
-            case self::TYPE_WEB_SERVER:{
+            case EASYSWOOLE_WEB_SERVER:{
                 $this->swooleServer = new \swoole_http_server($address,$port,...$args);
                 break;
             }
-            case self::TYPE_WEB_SOCKET_SERVER:{
+            case EASYSWOOLE_WEB_SOCKET_SERVER:{
                 $this->swooleServer = new \swoole_websocket_server($address,$port,...$args);
+                break;
+            }
+            case EASYSWOOLE_REDIS_SERVER:{
+                $this->swooleServer = new RedisServer($address,$port,...$args);
                 break;
             }
             default:{
@@ -79,6 +81,9 @@ class ServerManager
     ]):EventRegister
     {
         $eventRegister = new EventRegister();
+        $subPort = $this->swooleServer->addlistener($listenAddress,$port,$type);
+        $subPort->set($setting);
+        $this->subServer[$serverName] = $subPort;
         $this->subServerRegister[$serverName] = [
             'port'=>$port,
             'listenAddress'=>$listenAddress,
@@ -104,29 +109,26 @@ class ServerManager
                 }
             });
         }
-        $this->attachListener();
+        $this->registerSubPortCallback();
+        $this->isStart = true;
         $this->getSwooleServer()->start();
     }
 
-    private function attachListener():void
+    function isStart():bool
     {
-        foreach ($this->subServerRegister as $serverName => $server){
-            $subPort = $this->getSwooleServer()->addlistener($server['listenAddress'],$server['port'],$server['type']);
-            if($subPort){
-                $this->subServer[$serverName] = $subPort;
-                if(is_array($server['setting'])){
-                    $subPort->set($server['setting']);
-                }
-                $events = $server['eventRegister']->all();
-                foreach ($events as $event => $callback){
-                    $subPort->on($event, function (...$args) use ($callback) {
-                        foreach ($callback as $item) {
-                            call_user_func($item,...$args);
-                        }
-                    });
-                }
-            }else{
-                Trigger::getInstance()->throwable(new \Exception("addListener with server name:{$serverName} at host:{$server['host']} port:{$server['port']} fail"));
+        return $this->isStart;
+    }
+
+    private function registerSubPortCallback():void
+    {
+        foreach ($this->subServer as $serverName => $subPort ){
+            $events = $this->subServerRegister[$serverName]['eventRegister']->all();
+            foreach ($events as $event => $callback){
+                $subPort->on($event, function (...$args) use ($callback) {
+                    foreach ($callback as $item) {
+                        call_user_func($item,...$args);
+                    }
+                });
             }
         }
     }
