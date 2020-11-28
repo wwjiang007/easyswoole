@@ -1,4 +1,3 @@
-English  |  [中文](./README.zh-CN.md)  
 ![](easyswoole.png)
 
 [![Latest Stable Version](https://poser.pugx.org/easyswoole/easyswoole/v/stable)](https://packagist.org/packages/easyswoole/easyswoole)
@@ -8,9 +7,9 @@ English  |  [中文](./README.zh-CN.md)
 [![Monthly Downloads](https://poser.pugx.org/easyswoole/easyswoole/d/monthly)](https://packagist.org/packages/easyswoole/easyswoole)
 
 
-## EasySwoole
+# EasySwoole - A High Performance Swoole Framework
 
-EasySwoole is a distributed, persistent memory PHP framework based on the Swoole extension. It was created specifically for APIs to get rid of the performance penalties associated with process calls and file loading. EasySwoole highly encapsulates the Swoole Server and still maintains the original features of the Swoole server, supports simultaneous monitoring of HTTP, custom TCP, and UDP protocols, allowing developers to write multi-process, asynchronous, and highly available applications with minimal learning cost and effort.
+[EasySwoole](https://www.easyswoole.com/En.html) is a distributed, persistent memory PHP framework based on the Swoole extension. It was created specifically for APIs to get rid of the performance penalties associated with process calls and file loading. EasySwoole highly encapsulates the Swoole Server and still maintains the original features of the Swoole server, supports simultaneous monitoring of HTTP, custom TCP, and UDP protocols, allowing developers to write multi-process, asynchronous, and highly available applications with minimal learning cost and effort.
           
 - Base on Swoole extension
 - Built-in HTTP, TCP, WebSocket,Udp Coroutine Server
@@ -30,6 +29,11 @@ EasySwoole is a distributed, persistent memory PHP framework based on the Swoole
 - Remote Console support
 - Crontab Rule Timer support
 
+## Doc 
+
+- [Doc](https://www.easyswoole.com/)
+- [Git For Doc](https://github.com/easy-swoole/doc)
+
 ## ab Test
 
 ```php
@@ -46,7 +50,7 @@ use EasySwoole\Http\AbstractInterface\Controller;
  */
 class Index extends Controller
 {
-    function index()
+    public function index()
     {
         $this->response()->write('Hello World');
     }
@@ -107,7 +111,7 @@ Transfer rate:          2265.40 [Kbytes/sec] received
 ```
 composer require easyswoole/easyswoole=3.x
 php vendor/bin/easyswoole install
-php easyswoole start
+php easyswoole server start
 ```
 
 ## Unit Test
@@ -127,16 +131,16 @@ docker pull easyswoole/easyswoole3
 docker run -ti -p 9501:9501 easyswoole/easyswoole3
 ```
 - WorkerDir: ***/easyswoole***
-- Run Easyswoole : ***php easyswoole start*** 
+- Run Easyswoole : ***php easyswoole server start*** 
 
 ## Others 
-- [Home Page](https://www.easyswoole.com)
-- [Git For Doc](https://github.com/easy-swoole/doc)
 - [Git For Demo](https://github.com/easy-swoole/demo)
 - QQ交流群
     - VIP群 579434607 （本群需要付费599元）
     - EasySwoole官方一群 633921431(已满)
-    - EasySwoole官方二群 709134628
+    - EasySwoole官方二群 709134628(已满)
+    - EasySwoole官方三群 932625047(已满)
+    - EasySwoole官方四群 779897753
     
 - 商业支持：
     - QQ 291323003

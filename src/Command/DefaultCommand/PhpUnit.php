@@ -4,58 +4,59 @@
 namespace EasySwoole\EasySwoole\Command\DefaultCommand;
 
 
-use EasySwoole\Component\Timer;
-use EasySwoole\EasySwoole\Command\CommandInterface;
-use EasySwoole\EasySwoole\Command\Utility;
-use EasySwoole\EasySwoole\Trigger;
+use EasySwoole\Command\AbstractInterface\CommandHelpInterface;
+use EasySwoole\Command\AbstractInterface\CommandInterface;
+use EasySwoole\Command\CommandManager;
 use EasySwoole\Phpunit\Runner;
-use PHPUnit\TextUI\Command;
-use Swoole\Coroutine\Scheduler;
-use Swoole\ExitException;
 
 
 class PhpUnit implements CommandInterface
 {
-
     public function commandName(): string
     {
         return 'phpunit';
     }
 
-    public function exec(array $args): ?string
+    public function help(CommandHelpInterface $commandHelp): CommandHelpInterface
+    {
+        $commandHelp->addActionOpt('--no-coroutine', 'close coroutine');
+        return $commandHelp;
+    }
+
+    public function desc(): string
+    {
+        return 'Unit testing';
+    }
+
+    public function exec(): ?string
     {
         /*
-            * 清除输入变量
+         * 允许自动的执行一些初始化操作，只初始化一次
         */
-        global $argv;
-        $temp = $argv;
-        array_shift($temp);
-        $key = array_search('produce',$temp);
-        if($key){
-            unset($temp[$key]);
+        if (file_exists(getcwd() . '/phpunit.php')) {
+            require_once getcwd() . '/phpunit.php';
         }
-        $_SERVER['argv'] = $temp;
 
-        /*
-        * 允许自动的执行一些初始化操作，只初始化一次
-        */
-        if(file_exists(getcwd().'/phpunit.php')){
-            require_once getcwd().'/phpunit.php';
+        $argv = CommandManager::getInstance()->getOriginArgv();
+
+        // remove phpunit
+        array_shift($argv);
+
+        $key = array_search('--no-coroutine', $argv);
+
+        if ($key !== false) {
+            $noCoroutine = true;
+            unset($argv[$key]);
+        } else {
+            $noCoroutine = false;
         }
-        if(!class_exists(Runner::class)){
-            return 'please require easyswoole/phpunit at first';
+
+        $_SERVER['argv'] = $argv;
+        if (!class_exists(Runner::class)) {
+            echo "please require easyswoole/phpunit at first \n";
         }
-        $scheduler = new Scheduler();
-        $scheduler->add(function() {
-            Runner::run();
-        });
-        $scheduler->start();
+        Runner::run($noCoroutine);
         return null;
     }
 
-    public function help(array $args): ?string
-    {
-        $logo = Utility::easySwooleLog();
-        return $logo.'php easyswoole phpunit testDir';
-    }
 }
